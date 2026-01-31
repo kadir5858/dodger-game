@@ -21,6 +21,7 @@ from config import (
     BILDSCHIRM_HOEHE,
     FPS,
     HINTERGRUND_FARBE,
+    HINTERGRUND_BILD_PFAD,
     WEISS,
     ROT,
     SCHRIFT_GROESSE,
@@ -73,6 +74,33 @@ def pygame_initialisieren():
     return bildschirm, uhr
 
 
+def hintergrund_bild_laden():
+    """
+    Lädt das Hintergrundbild aus der Datei.
+    
+    Falls das Bild nicht gefunden wird, wird None zurückgegeben
+    und stattdessen die Hintergrundfarbe verwendet.
+    """
+    try:
+        # Versuche PNG zu laden
+        bild = pygame.image.load(HINTERGRUND_BILD_PFAD)
+        bild = pygame.transform.scale(bild, (BILDSCHIRM_BREITE, BILDSCHIRM_HOEHE))
+        print("Hintergrund-Bild erfolgreich geladen!")
+        return bild
+    except (pygame.error, FileNotFoundError):
+        # Versuche JPG zu laden
+        try:
+            jpg_pfad = HINTERGRUND_BILD_PFAD.replace(".png", ".jpg")
+            bild = pygame.image.load(jpg_pfad)
+            bild = pygame.transform.scale(bild, (BILDSCHIRM_BREITE, BILDSCHIRM_HOEHE))
+            print("Hintergrund-Bild (JPG) erfolgreich geladen!")
+            return bild
+        except (pygame.error, FileNotFoundError):
+            print("Hinweis: Kein Hintergrundbild gefunden. Verwende Hintergrundfarbe.")
+            print("  Tipp: Lege ein Bild 'background.png' oder 'background.jpg' in den assets-Ordner!")
+            return None
+
+
 def score_zeichnen(bildschirm, score, schrift):
     """
     Zeichnet den aktuellen Score auf den Bildschirm.
@@ -102,20 +130,20 @@ def game_over_zeichnen(bildschirm, score, schrift):
     bildschirm.blit(overlay, (0, 0))
     
     # Game Over Text
-    game_over_schrift = pygame.font.Font(None, 72)
+    game_over_schrift = pygame.font.Font(None, 92)
     game_over_text = game_over_schrift.render("GAME OVER", True, ROT)
     text_rect = game_over_text.get_rect(center=(BILDSCHIRM_BREITE // 2, BILDSCHIRM_HOEHE // 2 - 50))
     bildschirm.blit(game_over_text, text_rect)
     
     # Finaler Score
     score_text = schrift.render(f"Dein Score: {score}", True, WEISS)
-    score_rect = score_text.get_rect(center=(BILDSCHIRM_BREITE // 2, BILDSCHIRM_HOEHE // 2 + 20))
+    score_rect = score_text.get_rect(center=(BILDSCHIRM_BREITE // 2, BILDSCHIRM_HOEHE // 2 + 30))
     bildschirm.blit(score_text, score_rect)
     
     # Neustart-Hinweis
-    hinweis_schrift = pygame.font.Font(None, 28)
+    hinweis_schrift = pygame.font.Font(None, 32)
     hinweis_text = hinweis_schrift.render("Drücke LEERTASTE zum Neustarten oder ESC zum Beenden", True, WEISS)
-    hinweis_rect = hinweis_text.get_rect(center=(BILDSCHIRM_BREITE // 2, BILDSCHIRM_HOEHE // 2 + 80))
+    hinweis_rect = hinweis_text.get_rect(center=(BILDSCHIRM_BREITE // 2, BILDSCHIRM_HOEHE // 2 + 100))
     bildschirm.blit(hinweis_text, hinweis_rect)
 
 
@@ -197,6 +225,7 @@ def hauptschleife():
     spieler_bild = spieler_bild_laden()
     hindernis_bild = hindernis_bild_laden()
     powerup_bilder = powerup_bilder_laden()
+    hintergrund_bild = hintergrund_bild_laden()
     
     # Erstelle die Schriftart für den Score
     schrift = pygame.font.Font(None, SCHRIFT_GROESSE)
@@ -308,8 +337,11 @@ def hauptschleife():
         # ------------------------------------------
         # ZEICHNEN
         # ------------------------------------------
-        # Hintergrund füllen
-        bildschirm.fill(HINTERGRUND_FARBE)
+        # Hintergrund zeichnen (Bild oder Farbe)
+        if hintergrund_bild:
+            bildschirm.blit(hintergrund_bild, (0, 0))
+        else:
+            bildschirm.fill(HINTERGRUND_FARBE)
         
         # Hindernisse zeichnen
         hindernisse_zeichnen(bildschirm, hindernisse, hindernis_bild)
@@ -326,12 +358,12 @@ def hauptschleife():
         # Slow-Motion Anzeige
         if spiel_status.get("slow_motion_aktiv", False):
             slow_text = schrift.render("SLOW MOTION!", True, (255, 255, 0))
-            bildschirm.blit(slow_text, (BILDSCHIRM_BREITE - 200, 10))
+            bildschirm.blit(slow_text, (BILDSCHIRM_BREITE - 250, 10))
         
         # Schild Anzeige
         if spieler["hat_schild"]:
             schild_text = schrift.render("SCHILD AKTIV!", True, (100, 100, 255))
-            bildschirm.blit(schild_text, (BILDSCHIRM_BREITE - 200, 50))
+            bildschirm.blit(schild_text, (BILDSCHIRM_BREITE - 250, 55))
         
         # Game Over Bildschirm
         if spiel_status["game_over"]:
