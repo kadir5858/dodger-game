@@ -390,3 +390,4 @@ if __name__ == "__main__":
     print("  Weiche den Hindernissen aus!")
     print("=" * 50)
     hauptschleife()
+
